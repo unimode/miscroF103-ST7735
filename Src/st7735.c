@@ -24,16 +24,18 @@ static void setRESET(uint8_t value)
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, value);
 }
 
-static void sendCmd(uint8_t *pdata)
+static void sendCmd(uint8_t data)
 {
+	uint8_t t = data;
 	setA0(0);
-	HAL_SPI_Transmit(&hspi2, pdata, 1, 5000);
+	HAL_SPI_Transmit(&hspi2, &t, 1, 5000);
 }
 
-static void sendData(uint8_t *pdata)
+static void sendData(uint8_t data)
 {
+	uint8_t t = data;
 	setA0(1);
-	HAL_SPI_Transmit(&hspi2, pdata, 1, 5000);
+	HAL_SPI_Transmit(&hspi2, &t, 1, 5000);
 }
 
 void st7735Init(void)
@@ -92,9 +94,9 @@ void st7735DrawPixel(uint8_t x, uint8_t y, uint16_t color)
 	st7735SetRect(x, y, x, y);
 	sendCmd(0x2C);
 	tmp = (uint8_t)((color & 0xFF00)>>8);
-	sendData(&tmp);
+	sendData(tmp);
 	tmp = (uint8_t)(color & 0x00FF);
-	sendData(&tmp);
+	sendData(tmp);
 }
 
 

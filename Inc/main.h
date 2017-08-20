@@ -61,7 +61,7 @@
 #define LCD_A0_GPIO_Port GPIOB
 #define LCD_RESET_Pin GPIO_PIN_2
 #define LCD_RESET_GPIO_Port GPIOB
-#define LCD_CS_Pin GPIO_PIN_11
+#define LCD_CS_Pin GPIO_PIN_12
 #define LCD_CS_GPIO_Port GPIOB
 #define LCD_SCK_Pin GPIO_PIN_13
 #define LCD_SCK_GPIO_Port GPIOB

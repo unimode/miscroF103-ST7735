@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : gpio.c
+  * File Name          : USART.c
   * Description        : This file provides code for the configuration
-  *                      of all used GPIO pins.
+  *                      of the USART instances.
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -38,78 +38,89 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include "usart.h"
+
 #include "gpio.h"
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
-/*----------------------------------------------------------------------------*/
-/* Configure GPIO                                                             */
-/*----------------------------------------------------------------------------*/
-/* USER CODE BEGIN 1 */
+UART_HandleTypeDef huart2;
 
-/* USER CODE END 1 */
+/* USART2 init function */
 
-/** Configure pins as 
-        * Analog 
-        * Input 
-        * Output
-        * EVENT_OUT
-        * EXTI
-*/
-void MX_GPIO_Init(void)
+void MX_USART2_UART_Init(void)
 {
 
-  GPIO_InitTypeDef GPIO_InitStruct;
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LCD_A0_Pin|LCD_RESET_Pin|LCD_CS_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = LD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = LCD_LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(LCD_LED_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PBPin PBPin PBPin */
-  GPIO_InitStruct.Pin = LCD_A0_Pin|LCD_RESET_Pin|LCD_CS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
 
 }
 
-/* USER CODE BEGIN 2 */
+void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
+{
 
-/* USER CODE END 2 */
+  GPIO_InitTypeDef GPIO_InitStruct;
+  if(uartHandle->Instance==USART2)
+  {
+  /* USER CODE BEGIN USART2_MspInit 0 */
+
+  /* USER CODE END USART2_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_USART2_CLK_ENABLE();
+  
+    /**USART2 GPIO Configuration    
+    PA2     ------> USART2_TX
+    PA3     ------> USART2_RX 
+    */
+    GPIO_InitStruct.Pin = USART_TX_Pin|USART_RX_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN USART2_MspInit 1 */
+
+  /* USER CODE END USART2_MspInit 1 */
+  }
+}
+
+void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
+{
+
+  if(uartHandle->Instance==USART2)
+  {
+  /* USER CODE BEGIN USART2_MspDeInit 0 */
+
+  /* USER CODE END USART2_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_USART2_CLK_DISABLE();
+  
+    /**USART2 GPIO Configuration    
+    PA2     ------> USART2_TX
+    PA3     ------> USART2_RX 
+    */
+    HAL_GPIO_DeInit(GPIOA, USART_TX_Pin|USART_RX_Pin);
+
+  /* USER CODE BEGIN USART2_MspDeInit 1 */
+
+  /* USER CODE END USART2_MspDeInit 1 */
+  }
+} 
+
+/* USER CODE BEGIN 1 */
+
+/* USER CODE END 1 */
 
 /**
   * @}

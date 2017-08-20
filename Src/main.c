@@ -39,17 +39,34 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "spi.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
+#include "st7735.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+#define CMD_SETPIXEL 1
+uint8_t linebuf[64];
+uint8_t linecnt = 0;
+char txbuf[64];
+static uint8_t aRxBuffer[32];
+struct CMD_STRUCT{
+	uint8_t		cmd;
+	uint8_t		nparam;
+	uint16_t	param1;
+	uint16_t	param2;
+	uint16_t	param3;
+	uint16_t	param4;
+	uint16_t	param5;
+};
 
+void Test(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,6 +78,50 @@ void SystemClock_Config(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+/*
+int parse(char *pdata)
+{
+	char *p = pdata;
+	char *t = pdata;
+
+	uint8_t cmdc = 0;
+	uint8_t cmdv[5];
+
+	p = strtok(pdata, " ");
+	if(p == NULL)
+		return 0;
+	while(p != NULL){
+		if(cmdc == 0){ // command
+			switch(p[0]){
+				case 'p':
+					cmdv[0] = CMD_SETPIXEL;
+				break;
+			}
+		}
+		else{          // parameters
+			cmdv[cmdc] = atoi(p);
+		}
+		p = strtok(NULL, " ");
+		cmdc++;
+	}
+
+	int i;
+	for(i=0; i<cmdc; i++){
+		sprintf(txbuf, "%d : ", cmdv[i]);
+		HAL_UART_Transmit(&huart2, txbuf, strlen(txbuf), 5000);
+	}
+	txbuf[0] = '\n';
+	HAL_UART_Transmit(&huart2, txbuf, 1, 5000);
+
+	switch(cmdv[0]){
+		case CMD_SETPIXEL:
+			st7735DrawPixel(cmdv[1], cmdv[2], cmdv[3]);
+		break;
+	}
+
+	return cmdc;
+}
+*/
 
 /* USER CODE END 0 */
 
@@ -90,20 +151,53 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI2_Init();
+  MX_USART2_UART_Init();
+
+
+  strcpy(txbuf, "Test!\r\n");
+  //HAL_UART_Transmit(&huart2, txbuf, strlen(txbuf), 5000);
 
   /* USER CODE BEGIN 2 */
+  st7735Init();
+  Test();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+
+  //memset(linebuf, 0, sizeof(linebuf));
+  static struct CMD_STRUCT cmd;
+  while (1){
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-	  HAL_Delay(200);
+	  HAL_UART_Receive(&huart2, (uint8_t *)(&cmd), sizeof(cmd), 0xFFFFFFFF);
+	  if(cmd.cmd == CMD_SETPIXEL){
+		  st7735DrawPixel(cmd.param1, cmd.param2, cmd.param3);
+	  }
+
+/*
+	  if(HAL_UART_Receive(&huart2, (uint8_t *)aRxBuffer, 1, 0xFFFFFFFF) != HAL_OK){
+		  Error_Handler();
+	  }
+
+	  if(aRxBuffer[0] == '\r' || aRxBuffer[0] == '\n' ){
+		  txbuf[0] = '\n';
+//		  HAL_UART_Transmit(&huart2, txbuf, 1, 5000);
+		  linebuf[linecnt] = '\0';
+//		  parse(linebuf);
+		  memset(linebuf, 0, sizeof(linebuf));
+		  linecnt = 0;
+	  }
+	  else{
+//		  HAL_UART_Transmit(&huart2, aRxBuffer, 1, 5000);
+		  linebuf[linecnt] = aRxBuffer[0];
+		  linecnt++;
+	  }
+*/
+	  //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	  //HAL_Delay(200);
   }
   /* USER CODE END 3 */
 
@@ -157,7 +251,35 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Test(void)
+{
 
+	  int x, y;
+	  for(x=0; x<128; x++){
+	  	  for(y=0; y<160; y++){
+	  		  st7735DrawPixel(x, y, 0);
+	  	  }
+	    }
+	  for(x=20; x<50; x++){
+		  for(y=20; y<50; y++){
+			  st7735DrawPixel(x, y, 0x0000FF);
+		  }
+	  }
+
+	  for(x=20; x<50; x++){
+	  	  for(y=20+50; y<50+50; y++){
+	  		  st7735DrawPixel(x, y, 0x00FF00);
+	  	  }
+	    }
+
+
+	  for(x=20; x<50; x++){
+	  	  for(y=20+100; y<50+100; y++){
+	  		  st7735DrawPixel(x, y, 0x00F000);
+	  	  }
+	    }
+
+}
 /* USER CODE END 4 */
 
 /**
