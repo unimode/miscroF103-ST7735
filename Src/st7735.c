@@ -9,6 +9,8 @@
 #include "spi.h"
 #include "gpio.h"
 
+extern UART_HandleTypeDef huart2;
+
 static void setCS(uint8_t value)
 {
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, value);
@@ -28,14 +30,18 @@ static void sendCmd(uint8_t data)
 {
 	uint8_t t = data;
 	setA0(0);
+	//HAL_SPI_Transmit_DMA(&hspi2, &t, 1);
 	HAL_SPI_Transmit(&hspi2, &t, 1, 5000);
+	while(hspi2.Instance->SR  & SPI_SR_BSY);
 }
 
 static void sendData(uint8_t data)
 {
 	uint8_t t = data;
 	setA0(1);
+	//HAL_SPI_Transmit_DMA(&hspi2, &t, 1);
 	HAL_SPI_Transmit(&hspi2, &t, 1, 5000);
+	while(hspi2.Instance->SR  & SPI_SR_BSY);
 }
 
 void st7735Init(void)
@@ -99,6 +105,57 @@ void st7735DrawPixel(uint8_t x, uint8_t y, uint16_t color)
 	sendData(tmp);
 }
 
+void st7735FillRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color)
+{
+	uint8_t tmp;
+	uint8_t x,y;
+
+
+	st7735SetRect(x1, y1, x2, y2);
+	sendCmd(0x2C);
+	setA0(1);
+	HAL_Delay(1);
+//	HAL_SPI_Transmit_DMA(&hspi2, (uint8_t*)(&color), (x2-x1)*(y2-y1));
+	setA0(0);
+
+	for(x=x1; x<=x2; x++){
+		for(y=y1; y<=y2; y++){
+			tmp = (uint8_t)((color & 0xFF00)>>8);
+			sendData(tmp);
+			tmp = (uint8_t)(color & 0x00FF);
+			sendData(tmp);
+		}
+	}
+
+}
+
+void st7735FillRect2(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color)
+{
+	uint8_t tmp;
+	uint8_t x,y;
+
+	st7735SetRect(x1, y1, x2, y2);
+	sendCmd(0x2C);
+	setA0(1);
+
+	HAL_SPI_DeInit(&hspi2);
+	hspi2.Init.DataSize = SPI_DATASIZE_16BIT;
+	HAL_SPI_Init(&hspi2);
+
+	while(HAL_SPI_GetState(&hspi2) == HAL_SPI_STATE_RESET);
+	HAL_StatusTypeDef result = HAL_SPI_Transmit_DMA(&hspi2, (uint8_t*)(&color), 2*(x2-x1+1)*(y2-y1+1));
+	while(hspi2.Instance->SR  & SPI_SR_BSY);
+	//HAL_Delay(100);
+
+	HAL_SPI_DeInit(&hspi2);
+	hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+	HAL_SPI_Init(&hspi2);
+}
+
+void st7735DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color, uint8_t width)
+{
+
+}
 
 
 

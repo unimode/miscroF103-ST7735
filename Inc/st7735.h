@@ -12,5 +12,6 @@ void st7735Init(void);
 
 void st7735Test(void);
 void st7735DrawPixel(uint8_t x, uint8_t y, uint16_t color);
+void st7735FillRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color);
 //void st7735FillRect();
 #endif /* LCDST7735_H_ */

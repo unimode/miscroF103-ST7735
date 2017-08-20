@@ -38,6 +38,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f1xx_hal.h"
+#include "dma.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -150,12 +151,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_SPI2_Init();
   MX_USART2_UART_Init();
-
-
-  strcpy(txbuf, "Test!\r\n");
-  //HAL_UART_Transmit(&huart2, txbuf, strlen(txbuf), 5000);
 
   /* USER CODE BEGIN 2 */
   st7735Init();
@@ -166,36 +164,12 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  //memset(linebuf, 0, sizeof(linebuf));
-  static struct CMD_STRUCT cmd;
   while (1){
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	  HAL_UART_Receive(&huart2, (uint8_t *)(&cmd), sizeof(cmd), 0xFFFFFFFF);
-	  if(cmd.cmd == CMD_SETPIXEL){
-		  st7735DrawPixel(cmd.param1, cmd.param2, cmd.param3);
-	  }
 
-/*
-	  if(HAL_UART_Receive(&huart2, (uint8_t *)aRxBuffer, 1, 0xFFFFFFFF) != HAL_OK){
-		  Error_Handler();
-	  }
 
-	  if(aRxBuffer[0] == '\r' || aRxBuffer[0] == '\n' ){
-		  txbuf[0] = '\n';
-//		  HAL_UART_Transmit(&huart2, txbuf, 1, 5000);
-		  linebuf[linecnt] = '\0';
-//		  parse(linebuf);
-		  memset(linebuf, 0, sizeof(linebuf));
-		  linecnt = 0;
-	  }
-	  else{
-//		  HAL_UART_Transmit(&huart2, aRxBuffer, 1, 5000);
-		  linebuf[linecnt] = aRxBuffer[0];
-		  linecnt++;
-	  }
-*/
 	  //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 	  //HAL_Delay(200);
   }
@@ -253,32 +227,10 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void Test(void)
 {
-
-	  int x, y;
-	  for(x=0; x<128; x++){
-	  	  for(y=0; y<160; y++){
-	  		  st7735DrawPixel(x, y, 0);
-	  	  }
-	    }
-	  for(x=20; x<50; x++){
-		  for(y=20; y<50; y++){
-			  st7735DrawPixel(x, y, 0x0000FF);
-		  }
-	  }
-
-	  for(x=20; x<50; x++){
-	  	  for(y=20+50; y<50+50; y++){
-	  		  st7735DrawPixel(x, y, 0x00FF00);
-	  	  }
-	    }
-
-
-	  for(x=20; x<50; x++){
-	  	  for(y=20+100; y<50+100; y++){
-	  		  st7735DrawPixel(x, y, 0x00F000);
-	  	  }
-	    }
-
+	  st7735FillRect2(0, 0, 127, 160, 0);
+	  st7735FillRect2(20, 20, 49, 49, 0x0000FF);
+	  st7735FillRect2(20, 54, 49, 74, 0x00FF00);
+	  st7735FillRect2(20, 74, 49, 99, 0x00F000);
 }
 /* USER CODE END 4 */
 
