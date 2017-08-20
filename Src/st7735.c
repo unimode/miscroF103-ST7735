@@ -214,3 +214,35 @@ void st7735DrawText(uint8_t x, uint8_t y, const uint8_t str[], uint16_t charColo
 	}
 }
 
+// ---------------- 7-segment display -------------------
+//     --A--
+//    F     B
+//     --G--             byte: A-B-C-D-E-F-G-DP
+//    E     C
+//     --D--  DP
+uint8_t dx = 10;
+uint8_t dy = 10;
+uint8_t ds = 2;
+uint8_t decode[]={252, 96, 218, 242, 102, 182, 190, 224, 254, 246};
+
+
+void drawDigit(uint8_t x, uint8_t y, uint16_t color, uint8_t size, uint8_t data)
+{
+	uint8_t i;
+	uint8_t digit = data;
+	if(decode[data] & 128)
+		st7735FillRect(x+2*dx+2*ds, y+2*ds, ds, dy, color);      // A
+	if(decode[data] & 64)
+		st7735FillRect(x+1*dx+2*ds, y+1*dx+3*ds, dx, ds, color); // B
+	if(decode[data] & 32)
+		st7735FillRect(x+0*dx+1*ds, y+1*dx+3*ds, dx, ds, color); // C
+	if(decode[data] & 16)
+		st7735FillRect(x, y+2*ds, ds, dy, color);                // D
+	if(decode[data] & 8)
+		st7735FillRect(x+0*dx+1*ds, y, dx, ds, color);           // E
+	if(decode[data] & 4)
+		st7735FillRect(x+1*dx+2*ds, y, dx, ds, color); 			 // F
+	if(decode[data] & 2)
+		st7735FillRect(x+1*dx+1*ds, y+2*ds, ds, dy, color);      // G
+}
+

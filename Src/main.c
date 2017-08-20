@@ -163,10 +163,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+  uint8_t cnt=0;
   while (1){
   /* USER CODE END WHILE */
-
+	  drawDigit(90, 110, 0, 1, 8);
+	  drawDigit(90, 110, 31, 1, cnt % 10);
+	  cnt++;
+	  HAL_Delay(1000);
   /* USER CODE BEGIN 3 */
 
 
@@ -245,6 +248,8 @@ void Test(void)
 	  st7735FillRect(90, 20, 20, 20, 1024);     // GREEN
 	  st7735FillRect(90, 50, 20, 20, 31);   	// RED
 	  st7735FillRect(90, 80, 20, 20, 31+1024);	// YELLOW
+
+	  drawDigit(90, 110, 31, 1, 8);
 }
 /* USER CODE END 4 */
 
