@@ -166,8 +166,8 @@ int main(void)
   uint8_t cnt=0;
   while (1){
   /* USER CODE END WHILE */
-	  drawDigit(90, 110, 0, 1, 8);
-	  drawDigit(90, 110, 31, 1, cnt % 10);
+	  drawDigit(50, 30, 0, 1, 8);
+	  drawDigit(50, 30, 31, 1, cnt % 10);
 	  cnt++;
 	  HAL_Delay(1000);
   /* USER CODE BEGIN 3 */
@@ -235,21 +235,14 @@ void Test(void)
 	  st7735FillRect(20, 50, 20, 20, 0x00FF00);
 	  st7735FillRect(20, 80, 20, 20, 0x00F000);
 	  st7735DrawRect(1, 1, 126, 158, 0xFC00, 1);
-	  st7735DrawSymbol(20, 110, 'M', 0x00EE, 0x0000);
-	  st7735DrawText(55, 20, "miscroLab", 0x00FF, 0);
 
-	  uint16_t color;
-	  static char str[8];
-	  for(color=0; color<=16; color++){
-		  //sprintf(str, "%04X", color);
-		  st7735DrawText(70, 20+10*color, "A", 32768+4096+4096+color*64, 0);
-	  }
+	  st7735DrawText(112, 20, "miscroLab", 0x00FF, 0);
 
 	  st7735FillRect(90, 20, 20, 20, 1024);     // GREEN
 	  st7735FillRect(90, 50, 20, 20, 31);   	// RED
 	  st7735FillRect(90, 80, 20, 20, 31+1024);	// YELLOW
 
-	  drawDigit(90, 110, 31, 1, 8);
+
 }
 /* USER CODE END 4 */
 

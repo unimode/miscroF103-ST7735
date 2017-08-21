@@ -9,6 +9,7 @@
 #include "spi.h"
 #include "gpio.h"
 #include "font7x15.h"
+#include "st7735.h"
 
 extern UART_HandleTypeDef huart2;
 
@@ -246,3 +247,14 @@ void drawDigit(uint8_t x, uint8_t y, uint16_t color, uint8_t size, uint8_t data)
 		st7735FillRect(x+1*dx+1*ds, y+2*ds, ds, dy, color);      // G
 }
 
+int  disp7Init(Disp7Type *hdisp, uint8_t x, uint8_t y, uint16_t fcolor,
+				uint16_t bcolor, uint8_t size, uint16_t data)
+{
+
+	return 1;
+}
+
+void disp7Update(Disp7Type *hdisp, uint16_t data)
+{
+
+}
