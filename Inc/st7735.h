@@ -20,7 +20,7 @@ typedef struct {
 	uint16_t bcolor;
 	uint8_t size;
 	uint8_t digits;
-	uint8_t data;
+	uint16_t data;
 } Disp7Type;
 
 int  disp7Init(Disp7Type *hdisp, uint8_t x, uint8_t y, uint16_t fcolor,

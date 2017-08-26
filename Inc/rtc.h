@@ -1,8 +1,14 @@
 /**
   ******************************************************************************
-  * @file    stm32f1xx_it.h
-  * @brief   This file contains the headers of the interrupt handlers.
+  * File Name          : RTC.h
+  * Description        : This file provides code for the configuration
+  *                      of the RTC instances.
   ******************************************************************************
+  ** This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
   *
   * COPYRIGHT(c) 2017 STMicroelectronics
   *
@@ -30,30 +36,46 @@
   *
   ******************************************************************************
   */
-
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F1xx_IT_H
-#define __STM32F1xx_IT_H
-
+#ifndef __rtc_H
+#define __rtc_H
 #ifdef __cplusplus
  extern "C" {
-#endif 
+#endif
 
 /* Includes ------------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
+#include "stm32f1xx_hal.h"
+#include "main.h"
 
-void SysTick_Handler(void);
-void RTC_IRQHandler(void);
-void DMA1_Channel5_IRQHandler(void);
-void EXTI15_10_IRQHandler(void);
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+extern RTC_HandleTypeDef hrtc;
+
+/* USER CODE BEGIN Private defines */
+
+/* USER CODE END Private defines */
+
+extern void _Error_Handler(char *, int);
+
+void MX_RTC_Init(void);
+
+/* USER CODE BEGIN Prototypes */
+
+/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
 #endif
+#endif /*__ rtc_H */
 
-#endif /* __STM32F1xx_IT_H */
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

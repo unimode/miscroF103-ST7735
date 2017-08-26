@@ -39,6 +39,7 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "dma.h"
+#include "rtc.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -79,51 +80,41 @@ void SystemClock_Config(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-/*
-int parse(char *pdata)
-{
-	char *p = pdata;
-	char *t = pdata;
+// -------------------- Real Time Clock ---------------------------------------------
+RTC_TimeTypeDef rtc_time;
+RTC_TimeTypeDef rtc_time_prev;
+static int first = 1;
 
-	uint8_t cmdc = 0;
-	uint8_t cmdv[5];
+Disp7Type hhour ={
+  			  .x = 50,
+  			  .y = 30,
+  			  .fcolor = LCD_RED,
+  			  .bcolor = 0x0,
+  			  .size = 1,
+  			  .digits = 2,
+  			  .data = 1234
+  	  };
 
-	p = strtok(pdata, " ");
-	if(p == NULL)
-		return 0;
-	while(p != NULL){
-		if(cmdc == 0){ // command
-			switch(p[0]){
-				case 'p':
-					cmdv[0] = CMD_SETPIXEL;
-				break;
-			}
-		}
-		else{          // parameters
-			cmdv[cmdc] = atoi(p);
-		}
-		p = strtok(NULL, " ");
-		cmdc++;
-	}
+Disp7Type hmin ={
+    			  .x = 50,
+    			  .y = 30+2*(10+6*2) + 10,
+    			  .fcolor = LCD_RED,
+    			  .bcolor = 0x0,
+    			  .size = 1,
+    			  .digits = 2,
+    			  .data = 1234
+    	  };
 
-	int i;
-	for(i=0; i<cmdc; i++){
-		sprintf(txbuf, "%d : ", cmdv[i]);
-		HAL_UART_Transmit(&huart2, txbuf, strlen(txbuf), 5000);
-	}
-	txbuf[0] = '\n';
-	HAL_UART_Transmit(&huart2, txbuf, 1, 5000);
-
-	switch(cmdv[0]){
-		case CMD_SETPIXEL:
-			st7735DrawPixel(cmdv[1], cmdv[2], cmdv[3]);
-		break;
-	}
-
-	return cmdc;
-}
-*/
-
+Disp7Type hsec ={
+    			  .x = 50,
+    			  .y = 30+4*(10+6*2) + 10,
+    			  .fcolor = LCD_RED,
+    			  .bcolor = 0x0,
+    			  .size = 0,
+    			  .digits = 2,
+    			  .data = 1234
+    	  };
+// ---------------------------------------------------------------------------
 /* USER CODE END 0 */
 
 int main(void)
@@ -154,6 +145,7 @@ int main(void)
   MX_DMA_Init();
   MX_SPI2_Init();
   MX_USART2_UART_Init();
+  MX_RTC_Init();
 
   /* USER CODE BEGIN 2 */
   st7735Init();
@@ -163,16 +155,30 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
   uint8_t cnt=0;
+
+  // hour - minute separator
+  st7735FillRect(50+10/2, 30+2*(10+6*2) + 10/2-2, 2, 2, LCD_RED);
+  st7735FillRect(50+3*10/2, 30+2*(10+6*2) + 10/2-2, 2, 2, LCD_RED);
   while (1){
   /* USER CODE END WHILE */
-	  drawDigit(50, 30, 0, 1, 8);
-	  drawDigit(50, 30, 31, 1, cnt % 10);
-	  cnt++;
-	  HAL_Delay(1000);
+
   /* USER CODE BEGIN 3 */
+	  HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN);
 
-
+	  if(rtc_time.Hours != rtc_time_prev.Hours){
+		  disp7Update(&hhour, rtc_time.Hours);
+	  }
+	  if(rtc_time.Minutes != rtc_time_prev.Minutes){
+		  disp7Update(&hmin, rtc_time.Minutes);
+	  }
+	  if(rtc_time.Seconds != rtc_time_prev.Seconds){
+		  disp7Update(&hsec, rtc_time.Seconds);
+	  }
+	  rtc_time_prev = rtc_time;
+	  //HAL_Delay(500);
 	  //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 	  //HAL_Delay(200);
   }
@@ -187,12 +193,14 @@ void SystemClock_Config(void)
 
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
+  RCC_PeriphCLKInitTypeDef PeriphClkInit;
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = 16;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
@@ -211,6 +219,13 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -243,7 +258,11 @@ void Test(void)
 	  st7735FillRect(90, 80, 20, 20, 31+1024);	// YELLOW
 
 
+
 }
+
+
+
 /* USER CODE END 4 */
 
 /**

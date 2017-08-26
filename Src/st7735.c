@@ -221,9 +221,9 @@ void st7735DrawText(uint8_t x, uint8_t y, const uint8_t str[], uint16_t charColo
 //     --G--             byte: A-B-C-D-E-F-G-DP
 //    E     C
 //     --D--  DP
-uint8_t dx = 10;
-uint8_t dy = 10;
-uint8_t ds = 2;
+uint8_t dx = 10; // x --> y
+uint8_t dy = 10; // y --> x
+uint8_t ds = 2;  // space
 uint8_t decode[]={252, 96, 218, 242, 102, 182, 190, 224, 254, 246};
 
 
@@ -256,5 +256,25 @@ int  disp7Init(Disp7Type *hdisp, uint8_t x, uint8_t y, uint16_t fcolor,
 
 void disp7Update(Disp7Type *hdisp, uint16_t data)
 {
+	uint8_t i;
+	uint16_t a = 0;
+	uint16_t div = 1;
 
+	if(hdisp->size == 0){
+		dx = 5;
+		dy = 5;
+		ds = 1;
+	}
+	else{
+		dx = 10;
+		dy = 10;
+		ds = 2;
+	}
+
+	for(i=0; i<hdisp->digits; i++){
+		div *= 10;
+		a = (data - a) % div;
+		drawDigit(hdisp->x, hdisp->y+(dy+6*ds)*(hdisp->digits-i-1), hdisp->bcolor, hdisp->size, 8);
+		drawDigit(hdisp->x, hdisp->y+(dy+6*ds)*(hdisp->digits-i-1), hdisp->fcolor, hdisp->size, a*10/div);
+	}
 }
