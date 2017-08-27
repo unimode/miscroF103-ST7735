@@ -39,6 +39,7 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "dma.h"
+#include "iwdg.h"
 #include "rtc.h"
 #include "spi.h"
 #include "usart.h"
@@ -53,11 +54,16 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+uint8_t click_cnt   = 0;
+uint8_t click_state = 0;
+
 #define CMD_SETPIXEL 1
 uint8_t linebuf[64];
 uint8_t linecnt = 0;
 char txbuf[64];
-static uint8_t aRxBuffer[32];
+uint8_t aRxBuffer[32];
+uint8_t fnewcmd = 0;
+uint8_t *pcmd = NULL;
 struct CMD_STRUCT{
 	uint8_t		cmd;
 	uint8_t		nparam;
@@ -80,7 +86,7 @@ void SystemClock_Config(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-// -------------------- Real Time Clock ---------------------------------------------
+// -------------------- RTC, WDT ---------------------------------------------
 RTC_TimeTypeDef rtc_time;
 RTC_TimeTypeDef rtc_time_prev;
 static int first = 1;
@@ -114,6 +120,27 @@ Disp7Type hsec ={
     			  .digits = 2,
     			  .data = 1234
     	  };
+
+Disp7Type hclick ={
+    			  .x = 100,
+    			  .y = 30+4*(10+6*2) + 10,
+    			  .fcolor = LCD_GREEN,
+    			  .bcolor = 0x0,
+    			  .size = 0,
+    			  .digits = 2,
+    			  .data = 1234
+    	  };
+
+Disp7Type hwd ={
+    			  .x = 22,
+    			  .y = 30+4*(10+6*2) + 10,
+    			  .fcolor = LCD_YELLOW,
+    			  .bcolor = 0x0,
+    			  .size = 0,
+    			  .digits = 2,
+    			  .data = 1234
+    	  };
+uint16_t wdtcnt =0;
 // ---------------------------------------------------------------------------
 /* USER CODE END 0 */
 
@@ -121,7 +148,14 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  // check if restart after wdt
+  // - do this as soon as possible before any commands
+  // - clear reset source flag for prevent false reset source
+  // - add eeprom emulation for store wdtcnt (AN2594)
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)){
+	  wdtcnt++;
+  }
+  __HAL_RCC_CLEAR_RESET_FLAGS();
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -146,11 +180,12 @@ int main(void)
   MX_SPI2_Init();
   MX_USART2_UART_Init();
   MX_RTC_Init();
+  MX_IWDG_Init();
 
   /* USER CODE BEGIN 2 */
   st7735Init();
   Test();
-
+  //HAL_UART_Receive_DMA(&huart2, aRxBuffer, sizeof(aRxBuffer));
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -162,10 +197,19 @@ int main(void)
   // hour - minute separator
   st7735FillRect(50+10/2, 30+2*(10+6*2) + 10/2-2, 2, 2, LCD_RED);
   st7735FillRect(50+3*10/2, 30+2*(10+6*2) + 10/2-2, 2, 2, LCD_RED);
+  HAL_IWDG_Start(&hiwdg);
+
+  // WDT reset counter
+  st7735DrawText(20, 30+3*(10+6*2)+7, "WD:", LCD_YELLOW, 0);
+  disp7Update(&hwd, wdtcnt);
+
   while (1){
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+	  HAL_IWDG_Refresh(&hiwdg);
+	  while(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0));
+
 	  HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN);
 
 	  if(rtc_time.Hours != rtc_time_prev.Hours){
@@ -178,6 +222,25 @@ int main(void)
 		  disp7Update(&hsec, rtc_time.Seconds);
 	  }
 	  rtc_time_prev = rtc_time;
+
+	  HAL_UART_Receive_IT(&huart2, aRxBuffer, sizeof(aRxBuffer));
+
+	  if(fnewcmd){
+		  fnewcmd = 0;
+		  disp7Update(&hclick, pcmd);
+	  }
+
+	  /*
+	  if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)==GPIO_PIN_SET){
+		  disp7Update(&hclick, 1);
+		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 1);
+	  }
+	  else{
+		  disp7Update(&hclick, 0);
+		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 0);
+	  }
+	  */
+
 	  //HAL_Delay(500);
 	  //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 	  //HAL_Delay(200);
