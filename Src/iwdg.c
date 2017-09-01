@@ -39,7 +39,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "iwdg.h"
-#include "stm32f1xx_hal_iwdg.h"
 
 /* USER CODE BEGIN 0 */
 

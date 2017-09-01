@@ -48,6 +48,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "st7735.h"
+#include "monitor.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -57,11 +58,19 @@
 uint8_t click_cnt   = 0;
 uint8_t click_state = 0;
 
+
 #define CMD_SETPIXEL 1
 uint8_t linebuf[64];
 uint8_t linecnt = 0;
-char txbuf[64];
-uint8_t aRxBuffer[32];
+
+#define RXBUFSIZE 	32
+uint8_t one_byte_buf = 0;
+uint8_t cmdbuf[RXBUFSIZE];
+uint8_t rxbuf[RXBUFSIZE];
+uint8_t irx_cnt = RXBUFSIZE; // interrupt pointer
+uint8_t mrx_cnt = RXBUFSIZE; // main loop pointer
+uint8_t cmdbuf[RXBUFSIZE];
+uint8_t fnewch = 0;
 uint8_t fnewcmd = 0;
 uint8_t *pcmd = NULL;
 struct CMD_STRUCT{
@@ -202,12 +211,14 @@ int main(void)
   // WDT reset counter
   st7735DrawText(20, 30+3*(10+6*2)+7, "WD:", LCD_YELLOW, 0);
   disp7Update(&hwd, wdtcnt);
-
+  uint8_t ch;
+  HAL_UART_Receive_DMA(&huart2, &one_byte_buf, 1);
   while (1){
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 	  HAL_IWDG_Refresh(&hiwdg);
+
 	  while(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0));
 
 	  HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN);
@@ -223,23 +234,13 @@ int main(void)
 	  }
 	  rtc_time_prev = rtc_time;
 
-	  HAL_UART_Receive_IT(&huart2, aRxBuffer, sizeof(aRxBuffer));
 
 	  if(fnewcmd){
 		  fnewcmd = 0;
-		  disp7Update(&hclick, pcmd);
+		  strcat(cmdbuf, "\r\n");
+		  HAL_UART_Transmit_DMA(&huart2, cmdbuf, strlen(cmdbuf));
+		  monitor(cmdbuf);
 	  }
-
-	  /*
-	  if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)==GPIO_PIN_SET){
-		  disp7Update(&hclick, 1);
-		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 1);
-	  }
-	  else{
-		  disp7Update(&hclick, 0);
-		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 0);
-	  }
-	  */
 
 	  //HAL_Delay(500);
 	  //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
